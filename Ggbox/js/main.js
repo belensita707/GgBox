@@ -138,6 +138,61 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cart.length === 0) return;
         clearCart();
     }
+    // Función para buscar productos
+function searchProducts(searchTerm) {
+    return productos.filter(product => {
+        return product.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
+               product.descripcion.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+}
+
+// Función para renderizar el catálogo con búsqueda
+function renderCatalogPage(searchTerm = '') {
+    const catalogContainer = document.getElementById('catalog-container');
+    if (catalogContainer) {
+        let productsToShow = productos;
+        
+        if (searchTerm) {
+            productsToShow = searchProducts(searchTerm);
+        }
+        
+        catalogContainer.innerHTML = productsToShow.map(createProductCard).join('');
+        
+        // Mostrar mensaje si no hay resultados
+        if (productsToShow.length === 0) {
+            catalogContainer.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-search" style="font-size: 3rem;"></i>
+                    <h4 class="mt-3">No se encontraron productos</h4>
+                    <p class="text-body-secondary">Intenta con otros términos de búsqueda.</p>
+                </div>`;
+        }
+    }
+}
+
+// Función para inicializar la búsqueda
+function initSearch() {
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
+    
+    // Búsqueda al hacer clic en el botón
+    if (searchButton) {
+        searchButton.addEventListener('click', function() {
+            const searchTerm = searchInput ? searchInput.value : '';
+            renderCatalogPage(searchTerm);
+        });
+    }
+    
+    // Búsqueda al presionar Enter
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const searchTerm = this.value;
+                renderCatalogPage(searchTerm);
+            }
+        });
+    }
+}
 
     // --- LÓGICA ESPECÍFICA PARA CADA PÁGINA ---
 
@@ -149,12 +204,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderCatalogPage() {
-        const catalogContainer = document.getElementById('catalog-container');
-        if (catalogContainer) {
-            catalogContainer.innerHTML = productos.map(createProductCard).join('');
+    function renderCatalogPage(category = 'all') {
+    const catalogContainer = document.getElementById('catalog-container');
+    if (catalogContainer) {
+        // Filtrar productos si se especifica una categoría
+        let filteredProducts = productos;
+        if (category !== 'all') {
+            filteredProducts = productos.filter(product => product.categoria === category);
         }
+        
+        catalogContainer.innerHTML = filteredProducts.map(createProductCard).join('');
     }
+}
+function initCategoryFilters() {
+    const filterButtons = document.querySelectorAll('#category-filters .btn');
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Remover la clase active de todos los botones
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Agregar la clase active al botón clickeado
+            this.classList.add('active');
+            
+            // Obtener la categoría seleccionada
+            const selectedCategory = this.getAttribute('data-category');
+            
+            // Renderizar el catálogo con la categoría seleccionada
+            renderCatalogPage(selectedCategory);
+        });
+    });
+}
     
     function renderCartPage() {
         const cartPageContainer = document.getElementById('cart-page-container');
@@ -251,6 +331,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (e.target.matches('.checkout-btn')) {
             handleCheckout();
+        }
+        if (document.getElementById('category-filters')) {
+        initCategoryFilters();
+        // Inicializar búsqueda si estamos en la página de catálogo
+        if (document.getElementById('search-input')) {
+        initSearch();
+    }
         }
     });
 });
